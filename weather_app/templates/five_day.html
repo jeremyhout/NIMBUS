@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NIMBUS Weather App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+  <!-- Nav -->
+  <nav style="display:flex; gap:.75rem; padding:.5rem 1rem; border-bottom:1px solid #ddd;">
+    <a href="/">Home</a>
+    <a href="/five-day" aria-current="page">5-Day</a>
+    <a href="/favorites">Favorites</a>
+    <a href="/settings">Settings</a>
+  </nav>
+
+  <!-- Banner -->
+  <div id="banner" style="display:none; background:#fff3cd; color:#664d03; padding:.5rem 1rem; border-bottom:1px solid #eedc9a; cursor:pointer;"
+       title="Click to dismiss">{{ banner or "" }}</div>
+
+  <main style="max-width:900px; margin:1rem auto; padding:0 1rem;">
+    <h1 style="margin:.25rem 0 1rem;">5-Day Forecast</h1>
+
+    <!-- Search -->
+    <form id="cityForm" style="display:flex; gap:.5rem; align-items:center;">
+      <input id="city" name="city" type="text" placeholder="Enter city (e.g., Long Beach, CA)" style="flex:1; padding:.5rem;" />
+      <button type="submit">Search</button>
+      <button id="btnUnits" type="button" aria-pressed="false">Show °C</button>
+    </form>
+    <div id="err" role="alert" style="color:#b00020; margin-top:.5rem;"></div>
+
+    <!-- Disambiguation -->
+    <div id="choices" style="display:none; margin-top:.75rem;">
+      <p>Did you mean:</p>
+      <ul id="choicesList" style="list-style:none; padding-left:0;"></ul>
+    </div>
+
+    <!-- Header + favorite -->
+    <div id="cityHeader" style="display:none; margin-top:1rem; font-weight:600;">
+      <span id="cityLabel"></span>
+      <button id="btnFavAdd" type="button" title="Add to favorites" style="margin-left:.5rem;">＋</button>
+    </div>
+
+    <!-- 5-day horizontal strip -->
+    <div id="fiveStrip"
+         style="display:flex; gap:14px; overflow-x:auto; padding:.75rem; border:1px solid #eee; background:#f9f9f9; margin-top:.5rem;">
+      <!-- columns created by JS -->
+    </div>
+
+    <section id="favPreview5" style="margin-top:1.25rem;">
+        <h2 class="section-title">Your favorites</h2>
+        <div id="favList5" class="favorites"></div>
+    </section>
+
+  </main>
+
+  <script src="{{ url_for('static', path='/five_day.js') }}"></script>
+
+  <script src="{{ url_for('static', path='/help.js') }}"></script>
+
+</body>
+</html>

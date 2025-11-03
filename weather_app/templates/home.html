@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NIMBUS Weather App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+  <!-- Nav -->
+  <nav class="navbar">
+    <a href="/" aria-current="page">Home</a>
+    <a href="/five-day">5-Day</a>
+    <a href="/favorites">Favorites</a>
+    <a href="/settings">Settings</a>
+  </nav>
+
+  <!-- Banner -->
+  <div id="banner" class="banner" title="Click to dismiss">{{ banner or "" }}</div>
+
+  <main class="container">
+    <h1 style="margin:.25rem 0 1rem;">24-Hour Forecast</h1>
+
+    <!-- Search -->
+    <form id="cityForm" class="form-row">
+      <input id="city" name="city" type="text" placeholder="Enter city (e.g., Long Beach, CA)" style="flex:1; padding:.5rem;" />
+      <button type="submit">Search</button>
+      <button id="btnUnits" type="button" aria-pressed="false">Show °C</button>
+    </form>
+    <div id="err" class="error" role="alert"></div>
+
+    <!-- Disambiguation -->
+    <div id="choices" style="display:none; margin-top:.75rem;">
+      <p>Did you mean:</p>
+      <ul id="choicesList" style="list-style:none; padding-left:0;"></ul>
+    </div>
+
+    <!-- Selected city header + save -->
+    <div id="cityHeader" style="display:none; margin-top:1rem; font-weight:600;">
+      <span id="cityLabel"></span>
+      <button id="btnFavAdd" type="button" title="Add to favorites" style="margin-left:.5rem;">＋</button>
+    </div>
+
+    <!-- CURRENT -->
+    <pre id="currentOut" class="block"></pre>
+
+    <!-- 24-HOUR strip -->
+    <div id="hourlyStrip" class="strip"></div>
+
+    <!-- Favorites preview (now styled via CSS classes) -->
+    <section id="favPreview" style="margin-top:1.25rem;">
+      <h2 class="section-title">Your favorites</h2>
+      <div id="favList" class="favorites"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', path='/home.js') }}"></script>
+
+  <script src="{{ url_for('static', path='/help.js') }}"></script>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NIMBUS</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 2rem; }
+    .sr { position: absolute; left: -9999px; }
+    .banner { background:#eef7ff; padding:.75rem 1rem; border-left:4px solid #48f; margin-bottom:1rem; }
+    .error { color:#b00; margin-top:.5rem; }
+    .card { border:1px solid #ddd; border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+    button { padding:.5rem .8rem; }
+    .row { display:flex; gap:1rem; flex-wrap: wrap; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+  <style>
+  .modal {
+    position: fixed; inset: 0;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.4);
+    z-index: 1000;
+  }
+  .modal.show { display: flex; }
+  .modal-card {
+    background: #fff; color: #111;
+    border-radius: 8px; padding: 16px; max-width: 420px; width: 92%;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    outline: none;
+  }
+</style>
+
+</head>
+<body>
+  <div id="banner" class="banner" role="status" aria-live="polite" style="display:none;"></div>
+
+
+  <h1>NIMBUS Weather App</h1>
+  <p id="helper">Enter a location to see current weather and a 5-day forecast.</p>
+
+  <!-- The form IDs must match script.js -->
+  <form id="cityForm" aria-describedby="helper">
+    <label for="city">Location</label>
+    <input id="city" name="city" type="text" placeholder="e.g., Long Beach" required />
+    <button type="submit">Get Weather</button>
+    <button type="button" id="btnForecast">5-Day Forecast</button>
+    <button type="button" id="btnUnits" aria-pressed="false">Show °C</button>
+    <button type="button" id="btnSchedule">Schedule Daily Reminder (7:00)</button>
+
+    <!-- Reminder controls -->
+    <div style="margin-top:10px; padding:8px; border:1px dashed #ccc; border-radius:6px;">
+    <div style="margin-bottom:6px; font-weight:600;">Reminder Settings</div>
+
+    <label>
+        Title:
+        <input id="remTitle" type="text" value="Daily Forecast" />
+    </label>
+    <br />
+
+    <label>
+        Message:
+        <input id="remMsg" type="text" placeholder="Check forecast for {city}" />
+    </label>
+    <br />
+
+    <label>
+        Schedule:
+        <select id="remSchedule">
+        <option value="cron:*/1 * * * *">Every minute (test)</option>
+        <option value="cron:0 7 * * *" selected>Daily at 7:00</option>
+        <!-- (Optional) One-off example:
+            <option value="time:2025-11-01T15:30:00Z">One-off at 15:30Z (example)</option>
+        -->
+        </select>
+    </label>
+    <br /><br />
+
+    <button type="button" id="btnCancelAll">Cancel All Reminders</button>
+    </div>
+
+
+    <div id="err" class="error" aria-live="polite"></div>
+  </form>
+
+  <!-- Disambiguation block goes BELOW the form, ABOVE the cards -->
+  <div id="choices" class="card" style="display:none; margin-top:1rem;">
+    <h3>Did you mean…</h3>
+    <ul id="choicesList"></ul>
+  </div>
+
+  <!-- Cards that hold the outputs. The PRE IDs must match script.js -->
+  <div class="row">
+    <div class="card" style="flex:1; min-width:260px;">
+      <h2>Current</h2>
+      <pre id="currentOut">—</pre>
+    </div>
+    <div class="card" style="flex:1; min-width:260px;">
+      <h2>5-Day Forecast</h2>
+      <pre id="forecastOut">—</pre>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+
+  <!-- Confirm Clear Modal -->
+<div id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmDesc" style="display:none;">
+  <div class="modal-card" role="document" tabindex="-1">
+    <h2 id="confirmTitle" style="margin:0 0 .5rem;">Clear all notifications?</h2>
+    <p id="confirmDesc" style="margin:0 0 1rem;">
+      This will remove every scheduled reminder. This can’t be undone.
+    </p>
+    <div class="actions" style="display:flex; gap:.5rem; justify-content:flex-end;">
+      <button id="confirmNo" type="button" aria-label="No, keep my reminders">No</button>
+      <button id="confirmYes" type="button" aria-label="Yes, clear all reminders">Yes, clear all</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

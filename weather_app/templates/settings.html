@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NIMBUS — Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+  <style>
+    /* light, consistent layout */
+    main { max-width: 800px; margin: 1rem auto; padding: 0 1rem; }
+    .row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+    .card { background:#f9f9f9; border:1px solid #eee; padding:.75rem; margin:.5rem 0; }
+    .btn   { padding:.5rem .75rem; }
+    .btn-danger { background:#b00020; color:#fff; border:none; }
+    .btn-outline { background:#fff; border:1px solid #ccc; }
+    table { width:100%; border-collapse: collapse; margin-top:.5rem; }
+    th, td { border-bottom:1px solid #eee; padding:.5rem; text-align:left; }
+    .muted { color:#666; }
+    #banner { cursor:pointer; }
+  </style>
+</head>
+<body>
+  <!-- Simple nav -->
+  <nav style="display:flex; gap:.75rem; padding:.5rem 1rem; border-bottom:1px solid #ddd;">
+    <a href="/">Home</a>
+    <a href="/five-day">5-Day</a>
+    <a href="/favorites">Favorites</a>
+    <a href="/settings" aria-current="page">Settings</a>
+  </nav>
+
+  <!-- Banner (from URNS webhooks) -->
+  <div id="banner" style="display:none; background:#fff3cd; color:#664d03; padding:.5rem 1rem; border-bottom:1px solid #eedc9a;"
+       title="Click to dismiss">{{ banner or "" }}</div>
+
+  <main>
+    <h1 style="margin:.25rem 0 1rem;">Settings</h1>
+
+    <!-- Units -->
+    <section class="card">
+      <h2 style="margin:0 0 .5rem;">Units</h2>
+      <button id="btnUnits" class="btn btn-outline" aria-pressed="false">Show °C</button>
+      <div class="muted" style="margin-top:.25rem;">Affects how temperatures are displayed across pages.</div>
+    </section>
+
+    <!-- Scheduling -->
+    <section class="card">
+      <h2 style="margin:0 0 .5rem;">Notifications</h2>
+
+      <!-- Quick test (cron every minute) -->
+      <div class="row">
+        <button id="btnTestEveryMinute" class="btn">Schedule Test (every minute)</button>
+        <span class="muted">Good for verifying your webhook/banner is wired correctly.</span>
+      </div>
+
+      <!-- One-time reminder -->
+      <div class="row" style="margin-top:.5rem;">
+        <label for="dtOne" class="muted">One-time reminder at:</label>
+        <input id="dtOne" type="datetime-local" />
+        <input id="msgOne" type="text" placeholder="Reminder message (optional)" style="flex:1; min-width:220px;"/>
+        <button id="btnOneTime" class="btn">Schedule One-Time</button>
+      </div>
+
+      <!-- Manage -->
+      <div class="row" style="margin-top:.75rem;">
+        <button id="btnList" class="btn btn-outline">Refresh List</button>
+        <button id="btnClearAll" class="btn btn-danger">Clear All Reminders…</button>
+      </div>
+
+      <!-- Reminders table -->
+      <div id="listWrap" style="margin-top:.75rem;">
+        <table id="tblRems" aria-label="Scheduled reminders">
+          <thead>
+            <tr>
+              <th>Reminder ID</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Next Run (UTC)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rowsRems">
+            <tr><td colspan="5" class="muted">No reminders loaded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', path='/settings.js') }}"></script>
+
+  <script src="{{ url_for('static', path='/help.js') }}"></script>
+
+</body>
+</html>

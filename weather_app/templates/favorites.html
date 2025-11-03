@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NIMBUS Weather App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+</head>
+<body>
+  <!-- Nav -->
+  <nav style="display:flex; gap:.75rem; padding:.5rem 1rem; border-bottom:1px solid #ddd;">
+    <a href="/">Home</a>
+    <a href="/five-day">5-Day</a>
+    <a href="/favorites" aria-current="page">Favorites</a>
+    <a href="/settings">Settings</a>
+  </nav>
+
+  <!-- Banner (click to dismiss) -->
+  <div id="banner" style="display:none; background:#fff3cd; color:#664d03; padding:.5rem 1rem; border-bottom:1px solid #eedc9a; cursor:pointer;"
+       title="Click to dismiss">{{ banner or "" }}</div>
+
+  <main style="max-width:900px; margin:1rem auto; padding:0 1rem;">
+    <h1 style="margin:.25rem 0 1rem;">Favorites</h1>
+
+    <!-- Add/search favorite -->
+    <form id="cityForm" style="display:flex; gap:.5rem; align-items:center;">
+      <input id="city" name="city" type="text" placeholder="Search city to add (e.g., Long Beach, CA)" style="flex:1; padding:.5rem;" />
+      <button type="submit">Add</button>
+      <button id="btnEdit" type="button">Edit</button>
+    </form>
+    <div id="err" role="alert" style="color:#b00020; margin-top:.5rem;"></div>
+
+    <!-- Disambiguation -->
+    <div id="choices" style="display:none; margin-top:.75rem;">
+      <p>Select a location to add:</p>
+      <ul id="choicesList" style="list-style:none; padding-left:0;"></ul>
+    </div>
+
+    <!-- Favorites list -->
+    <section style="margin-top:1rem;">
+      <div id="favList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:.75rem;"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', path='/favorites.js') }}"></script>
+
+  <script src="{{ url_for('static', path='/help.js') }}"></script>
+
+</body>
+</html>

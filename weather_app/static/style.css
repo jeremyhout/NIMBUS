@@ -1,0 +1,164 @@
+:root{
+  --container-max: 800px;
+  --pad: .75rem;
+  --gap: 12px;
+  --bg-soft: #f9f9f9;
+  --border: 1px solid #eee;
+}
+
+* { box-sizing: border-box; }
+
+.container {
+  max-width: var(--container-max);
+  margin: 1rem auto;
+  padding: 0 1rem;
+}
+
+.navbar {
+  display: flex;
+  gap: .75rem;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.banner {
+  display: none;
+  background: #fff3cd;
+  color: #664d03;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid #eedc9a;
+  cursor: pointer;
+}
+
+.form-row {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.error { color: #b00020; margin-top: .5rem; }
+
+/* Reusable “content block” — matches your currentOut look */
+.block {
+  white-space: pre-wrap;
+  background: var(--bg-soft);
+  padding: var(--pad);
+  border: var(--border);
+  margin-top: .5rem;
+}
+
+/* Reusable hourly strip — matches your hourlyStrip look */
+.strip {
+  display: flex;
+  gap: var(--gap);
+  overflow-x: auto;
+  padding: var(--pad);
+  border: var(--border);
+  background: var(--bg-soft);
+  margin-top: .5rem;
+}
+
+/* Page sections */
+.section-title { margin: 0 0 .5rem; }
+
+.favorites {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  width: 100%;
+}
+
+/* Title line above each favorite set */
+.fav-title {
+  font-weight: 600;
+  margin-top: .75rem;
+}
+
+/* Prevent background scroll when overlay is open */
+body.no-scroll {
+  overflow: hidden;
+}
+
+/* Floating (i) button */
+.help-fab {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2000; /* on top of app UI */
+}
+
+/* Overlay covers full screen */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.10); /* very light dim; feels like a page on top */
+  display: none;               /* toggled by JS */
+  z-index: 2001;
+}
+
+/* Full-screen modal "page" */
+.help-modal {
+  position: absolute;
+  inset: 0;                    /* fill the viewport */
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px 16px 12px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto; /* close | slide | counter | controls */
+  gap: 8px;
+}
+
+/* Close button */
+.help-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Slide image — constrained to viewport */
+.help-slide {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 140px); /* leaves room for header/controls */
+  object-fit: contain;
+  border: 1px solid #eee;
+  background: #fafafa;
+  justify-self: center;
+}
+
+/* Counter + controls */
+.help-counter {
+  text-align: center;
+  color: #444;
+  font-size: 14px;
+}
+
+.help-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.help-controls button {
+  min-width: 64px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+}
