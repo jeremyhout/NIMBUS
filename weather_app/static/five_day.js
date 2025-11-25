@@ -103,7 +103,11 @@ function renderFiveStripInto(targetEl, days, u='F'){
 }
 
 // --- Favorites preview (5-day) ---
-function renderFavPreview(){
+async function renderFavPreview() { 
+  // Load from server if logged in (one-time per page load)
+  if (isLoggedIn() && getFavs().length === 0) {
+    await loadFavoritesFromServer();
+  }
   const box = document.getElementById('favList'); // IMPORTANT: five_day.html must have <div id="favList">
   if (!box) return;
   box.innerHTML = '';
@@ -162,15 +166,15 @@ function getCurrentSelection() {
 }
 
 
-// Favorites (localStorage) — reuse the same key as Home
-function getFavs(){ try{ return JSON.parse(localStorage.getItem('favorites')||'[]'); }catch{ return []; } }
-function saveFavs(list){ try{ localStorage.setItem('favorites', JSON.stringify(list)); }catch{} }
-function addFav(item){
-  const list = getFavs();
-  if (!list.some(f => f.name===item.name && f.lat===item.lat && f.lon===item.lon)){
-    list.push(item); saveFavs(list);
-  }
-}
+// // Favorites (localStorage) — reuse the same key as Home
+// function getFavs(){ try{ return JSON.parse(localStorage.getItem('favorites')||'[]'); }catch{ return []; } }
+// function saveFavs(list){ try{ localStorage.setItem('favorites', JSON.stringify(list)); }catch{} }
+// function addFav(item){
+//   const list = getFavs();
+//   if (!list.some(f => f.name===item.name && f.lat===item.lat && f.lon===item.lon)){
+//     list.push(item); saveFavs(list);
+//   }
+// }
 
 // ===== 5-Day Rendering (main area) =====
 function renderFiveStrip(days, u='F'){
@@ -359,21 +363,23 @@ function renderFiveDayStripInto(targetEl, days, u='F', maxDays=5) {
   }
 }
 
-async function renderFavPreview5() {
-  if (!favList5) return; // ensure the section exists in HTML
+async function renderFavPreview5() {  // ✅ async function
+  const box = document.getElementById('favList5');
+  if (!box) return;
   const list = getFavs();
-  favList5.innerHTML = '';
-
+  box.innerHTML = '';
+  
   if (!list.length) {
-    favList5.innerHTML = '<div style="color:#666;">No favorites yet. Save a city on Home (＋) and it will show here.</div>';
+    box.innerHTML = '<div style="color:#666;">No favorites yet. Save a city on Home (＋) and it will show here.</div>';
     return;
   }
-
+  
+  // ✅ Load all forecasts in parallel (much faster!)
   for (const f of list) {
     // wrapper (no outer card; match main layout)
     const wrap = document.createElement('div');
     wrap.style.width = '100%';
-
+    
     // Title line
     const title = document.createElement('div');
     title.className = 'fav-title';
@@ -381,21 +387,24 @@ async function renderFavPreview5() {
     title.style.marginTop = '.75rem';
     title.textContent = f.name;
     wrap.appendChild(title);
-
+    
     // Five-day strip block (use same look as .strip)
     const strip = document.createElement('div');
     strip.className = 'strip';
     wrap.appendChild(strip);
-
-    favList5.appendChild(wrap);
-
-    try {
-      const fore = await fetchJSON('/api/forecast', { lat: f.lat, lon: f.lon, city: f.name });
-      renderFiveDayStripInto(strip, fore.forecast, units, 5);
-    } catch (e) {
-      strip.textContent = `Failed to load: ${e.message || 'error'}`;
-      strip.style.color = '#b00020';
-    }
+    
+    box.appendChild(wrap);
+    
+    // Load forecast asynchronously (don't block the loop)
+    (async () => {
+      try {
+        const fore = await fetchJSON('/api/forecast', { lat: f.lat, lon: f.lon, city: f.name });
+        renderFiveDayStripInto(strip, fore.forecast, units, 5);
+      } catch (e) {
+        strip.textContent = `Failed to load: ${e.message || 'error'}`;
+        strip.style.color = '#b00020';
+      }
+    })();
   }
 }
 

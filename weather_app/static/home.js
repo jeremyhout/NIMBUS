@@ -84,17 +84,18 @@ function getCurrentSelection() {
 }
 
 
-// Favorites (localStorage)
-function getFavs() { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } }
-function saveFavs(list) { try { localStorage.setItem('favorites', JSON.stringify(list)); } catch {} }
-function addFav(item) {
-  const list = getFavs();
-  if (!list.some(f => f.name === item.name && f.lat === item.lat && f.lon === item.lon)) {
-    list.push(item);
-    saveFavs(list);
-  }
-}
-function renderFavPreview() {
+// // Favorites (localStorage) #Obsolete for now (old code)
+// function getFavs() { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } }
+// function saveFavs(list) { try { localStorage.setItem('favorites', JSON.stringify(list)); } catch {} }
+// function addFav(item) {
+//   const list = getFavs();
+//   if (!list.some(f => f.name === item.name && f.lat === item.lat && f.lon === item.lon)) {
+//     list.push(item);
+//     saveFavs(list);
+//   }
+// }
+
+function renderFavPreview() { 
   const list = getFavs();
   const box = document.getElementById('favList');
   if (!box) return;

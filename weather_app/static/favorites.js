@@ -61,28 +61,16 @@ async function fetchJSON(url, body) {
   return data;
 }
 
-// ---------- Favorites storage ----------
-function getFavs() {
-  try { return JSON.parse(localStorage.getItem('favorites') || '[]'); }
-  catch { return []; }
-}
-function saveFavs(list) {
-  try { localStorage.setItem('favorites', JSON.stringify(list)); } catch {}
-}
-function addFav(item) {
-  const list = getFavs();
-  if (!list.some(f => f.name === item.name && f.lat === item.lat && f.lon === item.lon)) {
-    list.push(item);
-    saveFavs(list);
-  }
-}
-function removeFavByIndex(idx) {
-  const list = getFavs();
-  if (idx >= 0 && idx < list.length) {
-    list.splice(idx, 1);
-    saveFavs(list);
-  }
-}
+
+// // Remove favorite (saves both locally and to server)
+// function removeFavByIndex(idx) {
+//   const list = getFavs();
+//   if (idx >= 0 && idx < list.length) {
+//     list.splice(idx, 1);
+//     saveFavs(list);
+//     saveFavoritesToServer(list); // Sync to server
+//   }
+// }
 
 // ---------- Render ----------
 function miniTodayText(days){
@@ -96,14 +84,19 @@ function miniTodayText(days){
 }
 
 async function renderFavList() {
+  console.log('[favorites.js] getFavs() returns:', getFavs());
   favList.innerHTML = '';
   const list = getFavs();
+  
   if (!list.length) {
-    favList.innerHTML = '<div style="color:#666;">No favorites yet. Use the search above to add one.</div>';
+    const msg = isLoggedIn() 
+      ? 'No favorites yet. Use the search above to add one.'
+      : 'No favorites yet. Login to save favorites across devices!';
+    favList.innerHTML = `<div style="color:#666;">${msg}</div>`;
     return;
   }
 
-  // Fetch small previews (today’s hi/lo)
+  // Fetch small previews (today's hi/lo)
   const previews = await Promise.all(list.map(async (f) => {
     try {
       const fore = await fetchJSON('/api/forecast', { lat: f.lat, lon: f.lon, city: f.name });
@@ -150,7 +143,7 @@ async function renderFavList() {
     rm.style.right = '6px';
     rm.style.display = editMode ? 'inline-block' : 'none';
     rm.addEventListener('click', () => {
-      removeFavByIndex(idx);
+      removeFav(idx);
       renderFavList();
     });
     card.appendChild(rm);
@@ -218,3 +211,4 @@ btnEdit.addEventListener('click', () => {
 
 // ---------- Init ----------
 renderFavList();
+

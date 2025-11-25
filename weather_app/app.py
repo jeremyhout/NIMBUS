@@ -8,9 +8,12 @@ from .services import geocode_city, fetch_current_weather, fetch_5day_forecast
 from .services import fetch_hourly_24
 from .errors import ValidationError, UpstreamError
 from .cache import cache_get, cache_set
+from .auth import router as auth_router
 
 
 app = FastAPI(title="Weather App (Sprint 1)")
+# Add authentication routes
+app.include_router(auth_router)
 app.mount("/static", StaticFiles(directory="weather_app/static"), name="static")
 templates = Jinja2Templates(directory="weather_app/templates")
 
@@ -23,6 +26,10 @@ class CityQuery(BaseModel):
     city: str | None = None
     lat: float | None = None
     lon: float | None = None
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.get("/", response_class=HTMLResponse)

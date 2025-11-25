@@ -13,6 +13,11 @@
     <a href="/five-day">5-Day</a>
     <a href="/favorites" aria-current="page">Favorites</a>
     <a href="/settings">Settings</a>
+  <!-- Auth section on the right -->
+    <span style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem;">
+      <span id="userDisplay" style="font-weight: 500;"></span>
+      <a href="/login" id="authLink">Login</a>
+    </span>
   </nav>
 
   <!-- Banner (click to dismiss) -->
@@ -42,8 +47,9 @@
     </section>
   </main>
 
+  <script src="{{ url_for('static', path='/auth_ui.js') }}"></script>
+  <script src="{{ url_for('static', path='/favorites_helper.js') }}"></script>
   <script src="{{ url_for('static', path='/favorites.js') }}"></script>
-
   <script src="{{ url_for('static', path='/help.js') }}"></script>
 
 </body>

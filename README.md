@@ -1,6 +1,7 @@
 # Sprint 1 – Weather App + URNS
 
-
+## If running in a virtual enviornment:
+.\.venv\Scripts\activate
 ## Run services
 
 
@@ -8,8 +9,12 @@
 uvicorn weather_app.app:app --reload --port 8080
 
 
-# Terminal 2 – URNS
+# Terminal 2 – Univeraal Reminders Service (URNS)
 uvicorn urns.app:app --reload --port 8081
+
+# Terminal 3 - Universal Users Service (UUS)
+cd UUS_MC2
+>python secure_users_service.py
 
 
 Open http://127.0.0.1:8080
