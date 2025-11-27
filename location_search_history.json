@@ -1,0 +1,71 @@
+{
+  "string": [
+    {
+      "location_id": "string",
+      "display_name": "string",
+      "lat": -90.0,
+      "lon": -180.0,
+      "search_count": 1,
+      "first_searched": "2025-11-24T21:23:39.780333",
+      "last_searched": "2025-11-24T21:23:39.780333"
+    }
+  ],
+  "test": [
+    {
+      "location_id": "chicago_illinois_us",
+      "display_name": "Chicago, Illinois, United States",
+      "lat": 41.85003,
+      "lon": -87.65005,
+      "search_count": 3,
+      "first_searched": "2025-11-24T22:30:06.734637",
+      "last_searched": "2025-11-24T22:30:18.935429"
+    }
+  ],
+  "houtj": [
+    {
+      "location_id": "las_vegas_nevada_united_states",
+      "display_name": "Las Vegas, Nevada, United States",
+      "lat": 36.17497,
+      "lon": -115.13722,
+      "search_count": 3,
+      "first_searched": "2025-11-25T19:13:48.229099",
+      "last_searched": "2025-11-25T19:13:58.000309"
+    },
+    {
+      "location_id": "las_vegas_nevada_us",
+      "display_name": "Las Vegas, Nevada, United States",
+      "lat": 36.17497,
+      "lon": -115.13722,
+      "search_count": 1,
+      "first_searched": "2025-11-25T19:13:46.911159",
+      "last_searched": "2025-11-25T19:13:46.911159"
+    },
+    {
+      "location_id": "alamo_georgia_us",
+      "display_name": "Alamo, Georgia, United States",
+      "lat": 32.14712,
+      "lon": -82.77792,
+      "search_count": 3,
+      "first_searched": "2025-11-24T22:53:47.828179",
+      "last_searched": "2025-11-24T22:54:08.421494"
+    },
+    {
+      "location_id": "alamo_tennessee_us",
+      "display_name": "Alamo, Tennessee, United States",
+      "lat": 35.78479,
+      "lon": -89.11729,
+      "search_count": 1,
+      "first_searched": "2025-11-24T22:53:56.196980",
+      "last_searched": "2025-11-24T22:53:56.196980"
+    },
+    {
+      "location_id": "long_phrae_th",
+      "display_name": "Long, Phrae, Thailand",
+      "lat": 18.07422,
+      "lon": 99.83073,
+      "search_count": 1,
+      "first_searched": "2025-11-24T22:45:56.113237",
+      "last_searched": "2025-11-24T22:45:56.113237"
+    }
+  ]
+}

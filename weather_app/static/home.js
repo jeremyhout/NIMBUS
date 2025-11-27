@@ -1,3 +1,6 @@
+// weather_app/static/home_with_autocomplete.js
+// Updated home.js that integrates location search autocomplete
+
 // ---------- Element refs ----------
 const form = document.getElementById('cityForm');
 const input = document.getElementById('city');
@@ -17,11 +20,62 @@ const hourlyStrip = document.getElementById('hourlyStrip');
 const bannerEl = document.getElementById('banner');
 
 let units = 'F';
-let lastSelection = null; // { lat, lon, name }
+let lastSelection = null;
+let recentForecast = null;
+let recentHourly = null;
 
-// Cache last results for unit re-render
-let recentForecast = null; // { city, lat, lon, forecast: [...] }
-let recentHourly = null;   // { city, lat, lon, hourly: [...] }
+// ---------- NEW: Initialize autocomplete ----------
+let autocomplete = null;
+
+function initializeAutocomplete() {
+  if (typeof LocationAutocomplete === 'undefined') {
+    console.warn('LocationAutocomplete not loaded');
+    return;
+  }
+  
+  autocomplete = new LocationAutocomplete(input, {
+    onSelect: async (location) => {
+      console.log('Autocomplete selected:', location);
+      
+      // Track the selection (already done by autocomplete)
+      // Now fetch weather for this location
+      lastSelection = {
+        lat: location.lat,
+        lon: location.lon,
+        name: location.display_name
+      };
+      
+      try {
+        clearError();
+        const [fore, hour] = await Promise.all([
+          fetchJSON('/api/forecast', { 
+            lat: location.lat, 
+            lon: location.lon, 
+            city: location.display_name 
+          }),
+          fetchJSON('/api/hourly', { 
+            lat: location.lat, 
+            lon: location.lon, 
+            city: location.display_name 
+          }),
+        ]);
+        
+        renderIntoMain(fore, hour);
+        saveCurrentSelection({ 
+          name: location.display_name, 
+          lat: location.lat, 
+          lon: location.lon 
+        });
+        
+      } catch (ex) {
+        showError(ex.message || 'Failed to fetch weather');
+      }
+    },
+    minChars: 3,
+    maxSuggestions: 4,
+    showGeocoding: true  // Fall back to geocoding if needed
+  });
+}
 
 // ---------- Banner ----------
 function setBanner(text) {
@@ -34,6 +88,7 @@ function setBanner(text) {
     bannerEl.style.display = 'none';
   }
 }
+
 async function refreshBanner() {
   try {
     const r = await fetch('/api/banner');
@@ -41,12 +96,14 @@ async function refreshBanner() {
     setBanner(j.banner || '');
   } catch {}
 }
+
 async function clearBannerOnClick() {
   try {
     await fetch('/api/banner/clear', { method: 'POST' });
     setBanner('');
   } catch {}
 }
+
 if (bannerEl) {
   bannerEl.addEventListener('click', clearBannerOnClick);
   refreshBanner();
@@ -55,10 +112,15 @@ if (bannerEl) {
 // ---------- Helpers ----------
 function showError(msg) { err.textContent = msg || ''; }
 function clearError() { err.textContent = ''; }
-function hideChoices() { if (choices) { choices.style.display = 'none'; choicesList.innerHTML = ''; } }
+function hideChoices() { 
+  if (choices) { 
+    choices.style.display = 'none'; 
+    choicesList.innerHTML = ''; 
+  } 
+}
 
-function cToF(c){ return Math.round((c * 9/5) + 32); }
-function unitSym(){ return `°${units}`; }
+function cToF(c) { return Math.round((c * 9/5) + 32); }
+function unitSym() { return `°${units}`; }
 
 async function fetchJSON(url, body) {
   const r = await fetch(url, {
@@ -72,7 +134,7 @@ async function fetchJSON(url, body) {
   return data;
 }
 
-// ---- Persist last selected city only for this browser tab/session ----
+// ---- Persist last selected city ----
 const CURRENT_KEY = 'currentSelection';
 
 function saveCurrentSelection(sel) {
@@ -83,115 +145,33 @@ function getCurrentSelection() {
   try { return JSON.parse(sessionStorage.getItem(CURRENT_KEY) || 'null'); } catch { return null; }
 }
 
-
-// // Favorites (localStorage) #Obsolete for now (old code)
-// function getFavs() { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } }
-// function saveFavs(list) { try { localStorage.setItem('favorites', JSON.stringify(list)); } catch {} }
-// function addFav(item) {
-//   const list = getFavs();
-//   if (!list.some(f => f.name === item.name && f.lat === item.lat && f.lon === item.lon)) {
-//     list.push(item);
-//     saveFavs(list);
-//   }
-// }
-
-function renderFavPreview() { 
-  const list = getFavs();
-  const box = document.getElementById('favList');
-  if (!box) return;
-  box.innerHTML = '';
-
-  if (!list.length) {
-    box.innerHTML = '<div style="color:#666;">No favorites yet. Search a city and click ＋ to save it.</div>';
-    return;
+// ---- Track location selection with microservice ----
+async function trackLocationSelection(location) {
+  try {
+    await fetch('/api/location-search/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        location_id: generateLocationId(location),
+        display_name: location.name,
+        lat: location.lat,
+        lon: location.lon
+      })
+    });
+  } catch (e) {
+    console.warn('Failed to track location:', e);
   }
-
-  list.forEach(async (f) => {
-    // wrapper so each favorite is a pair of blocks (no nested card)
-    const wrap = document.createElement('div');
-    wrap.style.width = '100%';        // fill the same <main> width
-    wrap.style.display = 'block';
-
-    // Title (matches city header style—no border)
-    const title = document.createElement('div');
-    title.className = 'fav-title';    // if you added CSS; otherwise keep the two lines below
-    title.style.fontWeight = title.style.fontWeight || '600';
-    title.style.marginTop = title.style.marginTop || '.75rem';
-    title.textContent = f.name;
-    wrap.appendChild(title);
-
-    // Today block — SAME look as #currentOut
-    const todayEl = document.createElement('pre');
-    todayEl.className = 'block';      // uses .block CSS if present
-    if (!todayEl.className) {
-      todayEl.style.whiteSpace = 'pre-wrap';
-      todayEl.style.marginTop = '.5rem';
-      todayEl.style.background = '#f9f9f9';
-      todayEl.style.padding = '.75rem';
-      todayEl.style.border = '1px solid #eee';
-    }
-    todayEl.textContent = 'Loading...';
-    wrap.appendChild(todayEl);
-
-    // Hourly strip — SAME look as #hourlyStrip
-    const strip = document.createElement('div');
-    strip.className = 'strip';        // uses .strip CSS if present
-    if (!strip.className) {
-      strip.style.display = 'flex';
-      strip.style.gap = '12px';
-      strip.style.overflowX = 'auto';
-      strip.style.padding = '.75rem';
-      strip.style.border = '1px solid #eee';
-      strip.style.background = '#f9f9f9';
-      strip.style.marginTop = '.5rem';
-    }
-    wrap.appendChild(strip);
-
-    box.appendChild(wrap);
-
-    // Fetch + render
-    try {
-      const [fore, hour] = await Promise.all([
-        fetchJSON('/api/forecast', { lat: f.lat, lon: f.lon, city: f.name }),
-        fetchJSON('/api/hourly',   { lat: f.lat, lon: f.lon, city: f.name }),
-      ]);
-
-      const d0 = (fore.forecast && fore.forecast[0]) || {};
-      const hiC = (typeof d0.temp_max_c === 'number') ? d0.temp_max_c : null;
-      const loC = (typeof d0.temp_min_c === 'number') ? d0.temp_min_c : null;
-      const hi = hiC == null ? '—' : (units === 'F' ? cToF(hiC) : Math.round(hiC));
-      const lo = loC == null ? '—' : (units === 'F' ? cToF(loC) : Math.round(loC));
-      todayEl.textContent = `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
-
-      if (typeof renderHourlyStripInto === 'function') {
-        renderHourlyStripInto(strip, hour.hourly, units, 24);
-      } else {
-        // fallback build
-        strip.innerHTML = '';
-        const nowTemp = (typeof hour.hourly[0]?.temp_c === 'number')
-          ? (units === 'F' ? cToF(hour.hourly[0].temp_c) : Math.round(hour.hourly[0].temp_c))
-          : '—';
-        strip.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
-        for (let i = 1; i < Math.min(24, hour.hourly.length); i++) {
-          const label = hour.hourly[i].hour || hour.hourly[i].time;
-          const t = (typeof hour.hourly[i].temp_c === 'number')
-            ? (units === 'F' ? cToF(hour.hourly[i].temp_c) : Math.round(hour.hourly[i].temp_c))
-            : '—';
-          strip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
-        }
-      }
-    } catch (e) {
-      todayEl.textContent = `Failed to load: ${e.message || 'error'}`;
-      todayEl.style.color = '#b00020';
-      strip.textContent = '';
-    }
-  });
 }
 
+function generateLocationId(location) {
+  // Simple ID generation (matching frontend autocomplete)
+  const name = (location.name || '').toLowerCase().replace(/\s+/g, '_');
+  return name.replace(/[^a-z0-9_]/g, '');
+}
 
 // ---------- Rendering ----------
 function renderSimpleToday(_cityLabel, forecastArr, u='F') {
-  // Use day-0 of the forecast as "today"
   if (!Array.isArray(forecastArr) || forecastArr.length === 0) {
     return `High: —\nLow: —`;
   }
@@ -203,23 +183,6 @@ function renderSimpleToday(_cityLabel, forecastArr, u='F') {
   return `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
 }
 
-// For favorites preview cards (text-only)
-function renderHourlyInlineText(hours, u='F', maxCols=10) {
-  if (!Array.isArray(hours) || hours.length === 0) return 'No hourly data.';
-  const cols = Math.min(maxCols, hours.length);
-  const header = ['Now'];
-  const temps  = [(typeof hours[0].temp_c === 'number') ? (u === 'F' ? cToF(hours[0].temp_c) : Math.round(hours[0].temp_c)) : '—'];
-  for (let i = 1; i < cols; i++) {
-    header.push(hours[i].hour || hours[i].time);
-    const t = (typeof hours[i].temp_c === 'number') ? (u === 'F' ? cToF(hours[i].temp_c) : Math.round(hours[i].temp_c)) : '—';
-    temps.push(t);
-  }
-  const line1 = header.join('  ');
-  const line2 = temps.map(v => `${v}${unitSym()}`).join('  ');
-  return `${line1}\n${line2}`;
-}
-
-// DOM strip (centered columns, horizontally scrollable)
 function renderHourlyStrip(hours, u='F', maxCols=24) {
   if (!hourlyStrip) return;
   hourlyStrip.innerHTML = '';
@@ -227,40 +190,17 @@ function renderHourlyStrip(hours, u='F', maxCols=24) {
     hourlyStrip.textContent = 'No hourly data.';
     return;
   }
-  const cols = Math.min(maxCols, hours.length);  
+  const cols = Math.min(maxCols, hours.length);
 
-  // Build "Now" column first
   const nowTemp = (typeof hours[0].temp_c === 'number') ? (u === 'F' ? cToF(hours[0].temp_c) : Math.round(hours[0].temp_c)) : '—';
   hourlyStrip.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
 
-  // Then subsequent hours
   for (let i = 1; i < cols; i++) {
     const label = hours[i].hour || hours[i].time;
     const t = (typeof hours[i].temp_c === 'number') ? (u === 'F' ? cToF(hours[i].temp_c) : Math.round(hours[i].temp_c)) : '—';
     hourlyStrip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
   }
 }
-
-function renderHourlyStripInto(targetEl, hours, u='F', maxCols=24) {
-  if (!targetEl) return;
-  targetEl.innerHTML = '';
-  if (!Array.isArray(hours) || !hours.length) {
-    targetEl.textContent = 'No hourly data.';
-    return;
-  }
-  const cols = Math.min(maxCols, hours.length);
-
-  // "Now"
-  const nowTemp = (typeof hours[0].temp_c === 'number') ? (u === 'F' ? cToF(hours[0].temp_c) : Math.round(hours[0].temp_c)) : '—';
-  targetEl.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
-
-  for (let i = 1; i < cols; i++) {
-    const label = hours[i].hour || hours[i].time;
-    const t = (typeof hours[i].temp_c === 'number') ? (u === 'F' ? cToF(hours[i].temp_c) : Math.round(hours[i].temp_c)) : '—';
-    targetEl.appendChild(makeHourCol(label, `${t}${unitSym()}`));
-  }
-}
-
 
 function makeHourCol(top, bottom) {
   const col = document.createElement('div');
@@ -288,18 +228,14 @@ function renderIntoMain(fore, hour) {
   cityHeader.style.display = 'inline';
   cityLabel.textContent = fore.city;
 
-  // Render simple today (hi/lo)
   currentOut.textContent = renderSimpleToday(fore.city, fore.forecast, units);
-
-  // Render hourly strip beneath
   renderHourlyStrip(hour.hourly, units);
 
-  // Cache
   recentForecast = fore;
   recentHourly = hour;
 }
 
-// ---------- Disambiguation UI ----------
+// ---------- Disambiguation UI (fallback if autocomplete not used) ----------
 function showChoices(items) {
   if (!choices || !choicesList) return;
   choicesList.innerHTML = '';
@@ -323,17 +259,18 @@ function showChoices(items) {
       lastSelection = { lat, lon, name };
       hideChoices();
       clearError();
+      
+      // Track selection
+      await trackLocationSelection({ lat, lon, name });
+      
       try {
         const [fore, hour] = await Promise.all([
           fetchJSON('/api/forecast', { lat, lon, city: name }),
-          fetchJSON('/api/hourly',   { lat, lon, city: name }),
+          fetchJSON('/api/hourly', { lat, lon, city: name }),
         ]);
         renderIntoMain(fore, hour);
-
-        // NEW: remember selected city across pages
         saveCurrentSelection({ name, lat, lon });
         input.value = name;
-
       } catch (ex) {
         showError(ex.message || 'Server error');
       }
@@ -349,38 +286,45 @@ form.addEventListener('submit', async (e) => {
   clearError();
 
   try {
+    // Check if we have a cached selection
     if (lastSelection && lastSelection.name.toLowerCase().includes(city.toLowerCase())) {
       const [fore, hour] = await Promise.all([
         fetchJSON('/api/forecast', { lat: lastSelection.lat, lon: lastSelection.lon, city: lastSelection.name }),
-        fetchJSON('/api/hourly',   { lat: lastSelection.lat, lon: lastSelection.lon, city: lastSelection.name }),
+        fetchJSON('/api/hourly', { lat: lastSelection.lat, lon: lastSelection.lon, city: lastSelection.name }),
       ]);
       renderIntoMain(fore, hour);
-
-      // remember selection
       saveCurrentSelection({ name: lastSelection.name, lat: lastSelection.lat, lon: lastSelection.lon });
       input.value = lastSelection.name;
-
+      
+      // Track this selection
+      await trackLocationSelection(lastSelection);
       return;
     }
 
+    // Otherwise do a normal search
     const foreAttempt = await fetchJSON('/api/forecast', { city });
-    if (foreAttempt.matches) { showChoices(foreAttempt.matches); return; }
+    if (foreAttempt.matches) { 
+      showChoices(foreAttempt.matches); 
+      return; 
+    }
 
     const [fore, hour] = await Promise.all([
       Promise.resolve(foreAttempt),
       fetchJSON('/api/hourly', { lat: foreAttempt.lat, lon: foreAttempt.lon, city: foreAttempt.city }),
     ]);
     renderIntoMain(fore, hour);
-    // remember selection
     saveCurrentSelection({ name: foreAttempt.city, lat: foreAttempt.lat, lon: foreAttempt.lon });
     input.value = foreAttempt.city;
-
+    
+    // Track this selection
+    await trackLocationSelection({ lat: fore.lat, lon: fore.lon, name: fore.city });
+    
   } catch (ex) {
     showError(ex.message || 'Network error. Please retry.');
   }
 });
 
-// Units toggle re-renders both boxes
+// Units toggle
 if (btnUnits) {
   btnUnits.addEventListener('click', () => {
     units = (units === 'F') ? 'C' : 'F';
@@ -395,7 +339,7 @@ if (btnUnits) {
   });
 }
 
-// Add to favorites (with confirmation)
+// Add to favorites
 if (btnFavAdd) {
   btnFavAdd.addEventListener('click', () => {
     if (!recentForecast) { showError('Search a city first.'); return; }
@@ -410,13 +354,93 @@ if (btnFavAdd) {
   });
 }
 
+function renderFavPreview() { 
+  const list = getFavs();
+  const box = document.getElementById('favList');
+  if (!box) return;
+  box.innerHTML = '';
 
-// Initial load: restore units, favorites, banner
-(function initStart(){
-  // One-time migration: ensure old localStorage value doesn't revive last session
+  if (!list.length) {
+    box.innerHTML = '<div style="color:#666;">No favorites yet. Search a city and click ＋ to save it.</div>';
+    return;
+  }
+
+  list.forEach(async (f) => {
+    const wrap = document.createElement('div');
+    wrap.style.width = '100%';
+    wrap.style.display = 'block';
+
+    const title = document.createElement('div');
+    title.className = 'fav-title';
+    title.style.fontWeight = title.style.fontWeight || '600';
+    title.style.marginTop = title.style.marginTop || '.75rem';
+    title.textContent = f.name;
+    wrap.appendChild(title);
+
+    const todayEl = document.createElement('pre');
+    todayEl.className = 'block';
+    if (!todayEl.className) {
+      todayEl.style.whiteSpace = 'pre-wrap';
+      todayEl.style.marginTop = '.5rem';
+      todayEl.style.background = '#f9f9f9';
+      todayEl.style.padding = '.75rem';
+      todayEl.style.border = '1px solid #eee';
+    }
+    todayEl.textContent = 'Loading...';
+    wrap.appendChild(todayEl);
+
+    const strip = document.createElement('div');
+    strip.className = 'strip';
+    if (!strip.className) {
+      strip.style.display = 'flex';
+      strip.style.gap = '12px';
+      strip.style.overflowX = 'auto';
+      strip.style.padding = '.75rem';
+      strip.style.border = '1px solid #eee';
+      strip.style.background = '#f9f9f9';
+      strip.style.marginTop = '.5rem';
+    }
+    wrap.appendChild(strip);
+
+    box.appendChild(wrap);
+
+    try {
+      const [fore, hour] = await Promise.all([
+        fetchJSON('/api/forecast', { lat: f.lat, lon: f.lon, city: f.name }),
+        fetchJSON('/api/hourly', { lat: f.lat, lon: f.lon, city: f.name }),
+      ]);
+
+      const d0 = (fore.forecast && fore.forecast[0]) || {};
+      const hiC = (typeof d0.temp_max_c === 'number') ? d0.temp_max_c : null;
+      const loC = (typeof d0.temp_min_c === 'number') ? d0.temp_min_c : null;
+      const hi = hiC == null ? '—' : (units === 'F' ? cToF(hiC) : Math.round(hiC));
+      const lo = loC == null ? '—' : (units === 'F' ? cToF(loC) : Math.round(loC));
+      todayEl.textContent = `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
+
+      strip.innerHTML = '';
+      const nowTemp = (typeof hour.hourly[0]?.temp_c === 'number')
+        ? (units === 'F' ? cToF(hour.hourly[0].temp_c) : Math.round(hour.hourly[0].temp_c))
+        : '—';
+      strip.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
+      for (let i = 1; i < Math.min(24, hour.hourly.length); i++) {
+        const label = hour.hourly[i].hour || hour.hourly[i].time;
+        const t = (typeof hour.hourly[i].temp_c === 'number')
+          ? (units === 'F' ? cToF(hour.hourly[i].temp_c) : Math.round(hour.hourly[i].temp_c))
+          : '—';
+        strip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
+      }
+    } catch (e) {
+      todayEl.textContent = `Failed to load: ${e.message || 'error'}`;
+      todayEl.style.color = '#b00020';
+      strip.textContent = '';
+    }
+  });
+}
+
+// Initial load
+(function initStart() {
   try { localStorage.removeItem('currentSelection'); } catch {}
 
-  // Default blank UI on first open
   cityHeader.style.display = 'none';
   currentOut.textContent = 'Search for a location to see the forecast.';
   hourlyStrip.textContent = '';
@@ -428,9 +452,12 @@ if (btnFavAdd) {
       btnUnits.textContent = `Show ${units === 'F' ? '°C' : '°F'}`;
     }
   } catch {}
+  
+  // Initialize autocomplete
+  initializeAutocomplete();
+  
   renderFavPreview();
 
-    // NEW: Auto-restore last selection if present
   const cur = getCurrentSelection();
   if (cur && typeof cur.lat === 'number' && typeof cur.lon === 'number') {
     input.value = cur.name || '';
@@ -438,7 +465,7 @@ if (btnFavAdd) {
       try {
         const [fore, hour] = await Promise.all([
           fetchJSON('/api/forecast', { lat: cur.lat, lon: cur.lon, city: cur.name }),
-          fetchJSON('/api/hourly',   { lat: cur.lat, lon: cur.lon, city: cur.name }),
+          fetchJSON('/api/hourly', { lat: cur.lat, lon: cur.lon, city: cur.name }),
         ]);
         renderIntoMain(fore, hour);
       } catch (e) {
@@ -446,6 +473,12 @@ if (btnFavAdd) {
       }
     })();
   }
-
-
 })();
+
+// Option 1: Quick Debugging (Add to bottom of home.js)
+console.log('🔍 Debug: Checking LocationAutocomplete...');
+if (typeof LocationAutocomplete === 'undefined') {
+    console.error('❌ Error: LocationAutocomplete class is NOT loaded. Check your script tags in home.html');
+} else {
+    console.log('✅ Success: LocationAutocomplete class is loaded!');
+}

@@ -16,6 +16,9 @@ uvicorn urns.app:app --reload --port 8081
 cd UUS_MC2
 >python secure_users_service.py
 
+# Terminal 4 - Location Search Service
+python location_search_service.py 6000
+
 
 Open http://127.0.0.1:8080
 

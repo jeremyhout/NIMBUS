@@ -443,3 +443,99 @@ async function renderFavPreview5() {  // ✅ async function
   renderFavPreview(); 
 
 })();
+
+
+
+// Helper function to generate location ID (same as home.js)
+function generateLocationId(location) {
+  const name = (location.name || '').toLowerCase().replace(/\s+/g, '_');
+  return name.replace(/[^a-z0-9_]/g, '');
+}
+
+// Helper function to track location selection
+async function trackLocationSelection(location) {
+  try {
+    await fetch('/api/location-search/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        location_id: generateLocationId(location),
+        display_name: location.name,
+        lat: location.lat,
+        lon: location.lon
+      })
+    });
+    console.log('Location tracked:', location.name);
+  } catch (e) {
+    console.warn('Failed to track location:', e);
+  }
+}
+
+// Initialize autocomplete for Five-Day page
+function initializeFiveDayAutocomplete() {
+  if (typeof LocationAutocomplete === 'undefined') {
+    console.warn('LocationAutocomplete not loaded on five-day page');
+    return;
+  }
+  
+  console.log('Initializing LocationAutocomplete on five-day page...');
+  
+  const autocomplete = new LocationAutocomplete(input, {
+    onSelect: async (location) => {
+      console.log('Five-day autocomplete selected:', location);
+      
+      // Store selection
+      lastSelection = {
+        lat: location.lat,
+        lon: location.lon,
+        name: location.display_name
+      };
+      
+      // Hide any disambiguation choices
+      hideChoices();
+      clearError();
+      
+      try {
+        // Fetch 5-day forecast
+        const fore = await fetchJSON('/api/forecast', { 
+          lat: location.lat, 
+          lon: location.lon, 
+          city: location.display_name 
+        });
+        
+        // Render the forecast
+        renderIntoPage(fore);
+        
+        // Save for cross-page persistence
+        saveCurrentSelection({ 
+          name: location.display_name, 
+          lat: location.lat, 
+          lon: location.lon 
+        });
+        
+        // Update input to show full name
+        input.value = location.display_name;
+        
+        // Track this selection
+        await trackLocationSelection({
+          lat: location.lat,
+          lon: location.lon,
+          name: location.display_name
+        });
+        
+      } catch (ex) {
+        showError(ex.message || 'Failed to fetch forecast');
+      }
+    },
+    minChars: 3,
+    maxSuggestions: 4,
+    showGeocoding: true
+  });
+  
+  console.log('Five-day LocationAutocomplete initialized!');
+}
+
+// Call initialization when page loads
+// Wrap in a small delay to ensure DOM is ready
+setTimeout(initializeFiveDayAutocomplete, 100);

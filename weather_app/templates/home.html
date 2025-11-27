@@ -28,7 +28,7 @@
 
     <!-- Search -->
     <form id="cityForm" class="form-row">
-      <input id="city" name="city" type="text" placeholder="Enter city (e.g., Long Beach, CA)" style="flex:1; padding:.5rem;" />
+      <input id="city" name="city" type="text" placeholder="Enter city (e.g., Long Beach, CA)" style="flex:1; padding:.5rem;" autocomplete="off" />
       <button type="submit">Search</button>
       <button id="btnUnits" type="button" aria-pressed="false">Show °C</button>
     </form>
@@ -61,6 +61,7 @@
 
   <script src="{{ url_for('static', path='/auth_ui.js') }}"></script>
   <script src="{{ url_for('static', path='/favorites_helper.js') }}"></script>
+  <script src="{{ url_for('static', path='/location_autocomplete.js') }}"></script>
   <script src="{{ url_for('static', path='/home.js') }}"></script>
   <script src="{{ url_for('static', path='/help.js') }}"></script>
 

@@ -212,3 +212,95 @@ btnEdit.addEventListener('click', () => {
 // ---------- Init ----------
 renderFavList();
 
+
+
+// Helper function to generate location ID (same as home.js)
+function generateLocationId(location) {
+  const name = (location.name || '').toLowerCase().replace(/\s+/g, '_');
+  return name.replace(/[^a-z0-9_]/g, '');
+}
+
+// Helper function to track location selection
+async function trackLocationSelection(location) {
+  try {
+    await fetch('/api/location-search/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        location_id: generateLocationId(location),
+        display_name: location.name,
+        lat: location.lat,
+        lon: location.lon
+      })
+    });
+    console.log('Location tracked:', location.name);
+  } catch (e) {
+    console.warn('Failed to track location:', e);
+  }
+}
+
+// Initialize autocomplete for Favorites page
+function initializeFavoritesAutocomplete() {
+  if (typeof LocationAutocomplete === 'undefined') {
+    console.warn('LocationAutocomplete not loaded on favorites page');
+    return;
+  }
+  
+  console.log('Initializing LocationAutocomplete on favorites page...');
+  
+  const autocomplete = new LocationAutocomplete(input, {
+    onSelect: async (location) => {
+      console.log('Favorites autocomplete selected:', location);
+      
+      // Hide any disambiguation choices
+      hideChoices();
+      clearError();
+      
+      try {
+        // Add to favorites immediately
+        const added = addFav({ 
+          name: location.display_name, 
+          lat: location.lat, 
+          lon: location.lon 
+        });
+        
+        if (added) {
+          // Clear the input
+          input.value = '';
+          
+          // Re-render favorites list to show the new one
+          renderFavList();
+          
+          // Track this selection
+          await trackLocationSelection({
+            lat: location.lat,
+            lon: location.lon,
+            name: location.display_name
+          });
+          
+          // Show success message briefly
+          showError(''); // clear any errors
+          console.log('Added to favorites:', location.display_name);
+          
+        } else {
+          // Already in favorites
+          showError('This location is already in your favorites');
+          setTimeout(() => showError(''), 3000);
+        }
+        
+      } catch (ex) {
+        showError(ex.message || 'Failed to add favorite');
+      }
+    },
+    minChars: 3,
+    maxSuggestions: 4,
+    showGeocoding: true
+  });
+  
+  console.log('Favorites LocationAutocomplete initialized!');
+}
+
+// Call initialization when page loads
+// Wrap in a small delay to ensure DOM is ready
+setTimeout(initializeFavoritesAutocomplete, 100);

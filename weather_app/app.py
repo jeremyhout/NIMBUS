@@ -9,11 +9,13 @@ from .services import fetch_hourly_24
 from .errors import ValidationError, UpstreamError
 from .cache import cache_get, cache_set
 from .auth import router as auth_router
+from location_search_integration import router as location_search_router
 
 
 app = FastAPI(title="Weather App (Sprint 1)")
 # Add authentication routes
 app.include_router(auth_router)
+app.include_router(location_search_router)
 app.mount("/static", StaticFiles(directory="weather_app/static"), name="static")
 templates = Jinja2Templates(directory="weather_app/templates")
 
