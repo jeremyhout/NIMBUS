@@ -200,6 +200,7 @@ function renderHourlyStrip(hours, u='F', maxCols=24) {
     const t = (typeof hours[i].temp_c === 'number') ? (u === 'F' ? cToF(hours[i].temp_c) : Math.round(hours[i].temp_c)) : '—';
     hourlyStrip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
   }
+  
 }
 
 function makeHourCol(top, bottom) {
@@ -226,7 +227,13 @@ function makeHourCol(top, bottom) {
 
 function renderIntoMain(fore, hour) {
   cityHeader.style.display = 'inline';
-  cityLabel.textContent = fore.city;
+  
+  // Add timezone to city label if available
+  let displayText = fore.city;
+  if (fore.timezone) {
+    displayText += ` (${fore.timezone})`;
+  }
+  cityLabel.textContent = displayText;
 
   currentOut.textContent = renderSimpleToday(fore.city, fore.forecast, units);
   renderHourlyStrip(hour.hourly, units);

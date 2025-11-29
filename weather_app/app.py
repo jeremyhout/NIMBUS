@@ -63,7 +63,6 @@ async def api_hourly(body: CityQuery):
             city = (body.city or "").strip()
             if not city:
                 raise ValidationError("City name is required.")
-            # small cache, optional
             ck = f"hourly24:{city.lower()}"
             cached = cache_get(ck)
             if cached:
@@ -75,8 +74,14 @@ async def api_hourly(body: CityQuery):
             choice = matches[0]
             lat, lon, norm_city = choice["lat"], choice["lon"], choice["name"]
 
-        hourly = await fetch_hourly_24(lat, lon)  # list of next 24 hours, localized
-        payload = {"city": norm_city, "lat": lat, "lon": lon, "hourly": hourly}
+        hourly_data = await fetch_hourly_24(lat, lon)
+        payload = {
+            "city": norm_city,
+            "lat": lat,
+            "lon": lon,
+            "hourly": hourly_data.get("hourly", []),
+            "timezone": hourly_data.get("timezone", "")  # Add timezone
+        }
         if body.lat is None:
             cache_set(f"hourly24:{(body.city or '').lower()}", payload, ttl=300)
         return payload
@@ -139,8 +144,14 @@ async def api_forecast(body: CityQuery):
             choice = matches[0]
             lat, lon, norm_city = choice["lat"], choice["lon"], choice["name"]
 
-        forecast = await fetch_5day_forecast(lat, lon)
-        payload = {"city": norm_city, "lat": lat, "lon": lon, "forecast": forecast}
+        forecast_data = await fetch_5day_forecast(lat, lon)
+        payload = {
+            "city": norm_city,
+            "lat": lat,
+            "lon": lon,
+            "forecast": forecast_data.get("forecast", []),
+            "timezone": forecast_data.get("timezone", "")  # Add timezone
+        }
         if body.lat is None:
             cache_set(f"forecast5:{(body.city or '').lower()}", payload, ttl=1800)
         return payload

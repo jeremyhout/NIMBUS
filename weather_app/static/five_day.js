@@ -220,7 +220,16 @@ function renderFiveStrip(days, u='F'){
 
 function renderIntoPage(fore){
   if (cityHeader){ cityHeader.style.display = 'inline'; }
-  if (cityLabel){ cityLabel.textContent = fore.city; }
+  
+  // Add timezone to city label if available
+  if (cityLabel) {
+    let displayText = fore.city;
+    if (fore.timezone) {
+      displayText += ` (${fore.timezone})`;
+    }
+    cityLabel.textContent = displayText;
+  }
+  
   renderFiveStrip(fore.forecast, units);
   recentForecast = fore;
 }

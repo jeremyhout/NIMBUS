@@ -23,13 +23,40 @@
   ],
   "houtj": [
     {
+      "location_id": "new_york_new_york_us",
+      "display_name": "New York, New York, United States",
+      "lat": 40.71427,
+      "lon": -74.00597,
+      "search_count": 7,
+      "first_searched": "2025-11-26T22:04:27.003393",
+      "last_searched": "2025-11-28T22:21:14.498633"
+    },
+    {
       "location_id": "las_vegas_nevada_united_states",
       "display_name": "Las Vegas, Nevada, United States",
       "lat": 36.17497,
       "lon": -115.13722,
-      "search_count": 3,
+      "search_count": 4,
       "first_searched": "2025-11-25T19:13:48.229099",
-      "last_searched": "2025-11-25T19:13:58.000309"
+      "last_searched": "2025-11-28T15:39:45.373965"
+    },
+    {
+      "location_id": "manila_national_capital_region_ph",
+      "display_name": "Manila, National Capital Region, Philippines",
+      "lat": 14.6042,
+      "lon": 120.9822,
+      "search_count": 1,
+      "first_searched": "2025-11-26T23:42:27.835194",
+      "last_searched": "2025-11-26T23:42:27.835194"
+    },
+    {
+      "location_id": "long_beach_california_us",
+      "display_name": "Long Beach, California, United States",
+      "lat": 33.76696,
+      "lon": -118.18923,
+      "search_count": 1,
+      "first_searched": "2025-11-26T23:41:49.992595",
+      "last_searched": "2025-11-26T23:41:49.992595"
     },
     {
       "location_id": "las_vegas_nevada_us",

@@ -2,10 +2,26 @@
 import httpx
 from datetime import date as _date, datetime, timezone
 from .errors import ValidationError, UpstreamError
+from timezone_client import get_timezone_client
 
 
 USER_AGENT = {"User-Agent": "SE-WeatherApp/1.0 (class project)"}
 
+
+def get_timezone_display(lat: float, lon: float) -> str:
+    """
+    Get timezone abbreviation for display (e.g., 'EST', 'PST').
+    Returns empty string if timezone service is unavailable.
+    """
+    try:
+        client = get_timezone_client()
+        result = client.get_timezone(lat, lon)
+        if result and result.get('abbreviation'):
+            return result['abbreviation']
+    except Exception as e:
+        # Silently fail - timezone is optional
+        pass
+    return ""
 
 async def geocode_city(city: str):
     """Return up to 5 candidate places with state/admin1 so users can disambiguate."""
@@ -39,14 +55,14 @@ OPEN_METEO = "https://api.open-meteo.com/v1/forecast"
 async def fetch_hourly_24(lat: float, lon: float):
     """
     Return the next ~24 hours of temperature and precipitation probability,
-    with local timezone applied by the API.
+    starting from the current time in the location's timezone.
     """
     params = {
         "latitude": lat,
         "longitude": lon,
         "hourly": "temperature_2m,precipitation_probability",
-        "timezone": "auto",        # ✅ local to location
-        "forecast_days": 2,        # get enough hours; we'll slice to next 24
+        "timezone": "auto",
+        "forecast_hours": 24,  # Get next 24 hours from current time
     }
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
@@ -55,44 +71,50 @@ async def fetch_hourly_24(lat: float, lon: float):
             j = r.json()
     except Exception as e:
         raise UpstreamError(f"Forecast provider error: {e}")
-
+    
     hourly = (j or {}).get("hourly") or {}
     times = hourly.get("time") or []
     temps = hourly.get("temperature_2m") or []
     pops  = hourly.get("precipitation_probability") or []
-
-    # Take the first 24 entries (API is already aligned to 'now' in local time)
+    
     out = []
     count = min(24, len(times))
+    
     for i in range(count):
-        ds = times[i]  # e.g., "2025-11-01T13:00"
-        # Hour label (e.g., "1 PM")
+        time_str = times[i]
+        
         try:
-            dt = datetime.fromisoformat(ds)
+            dt = datetime.fromisoformat(time_str)
         except Exception:
-            # fallback parse
-            dt = datetime.strptime(ds, "%Y-%m-%dT%H:%M")
-        hour_label = dt.strftime("%I %p").lstrip("0")  # e.g., "01 PM" -> "1 PM"
-
-
+            dt = datetime.strptime(time_str, "%Y-%m-%dT%H:%M")
+        
+        hour_label = dt.strftime("%I %p").lstrip("0")
+        
         out.append({
-            "time": ds,
+            "time": time_str,
             "hour": hour_label,
             "temp_c": temps[i] if i < len(temps) else None,
             "pop": pops[i] if i < len(pops) else None,
         })
-    return out
+    
+    # Get timezone abbreviation
+    tz_abbr = get_timezone_display(lat, lon)
+    
+    return {
+        "hourly": out,
+        "timezone": tz_abbr
+    }
 
 async def fetch_current_weather(lat: float, lon: float):
     """
     Fetch the current weather from Open-Meteo with timezone auto-detection.
     """
-    url = "https://api.open-meteo.com/v1/forecast"  # ✅ define the base URL
+    url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
         "longitude": lon,
         "current_weather": True,
-        "timezone": "auto",   # ✅ align reported time to location’s timezone
+        "timezone": "auto",
     }
 
     try:
@@ -101,18 +123,20 @@ async def fetch_current_weather(lat: float, lon: float):
             r.raise_for_status()
             j = r.json()
             cw = j.get("current_weather") or {}
+            
+            # Get timezone abbreviation
+            tz_abbr = get_timezone_display(lat, lon)
+            
             return {
                 "temperature_c": cw.get("temperature"),
                 "windspeed": cw.get("windspeed"),
                 "weathercode": cw.get("weathercode"),
                 "time": cw.get("time"),
+                "timezone": tz_abbr  # Add timezone to response
             }
     except httpx.HTTPError as e:
         raise UpstreamError(f"Weather provider error: {e}")
 
-
-
-OPEN_METEO = "https://api.open-meteo.com/v1/forecast"
 
 async def fetch_5day_forecast(lat: float, lon: float):
     """
@@ -123,7 +147,7 @@ async def fetch_5day_forecast(lat: float, lon: float):
         "longitude": lon,
         "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max",
         "forecast_days": 5,
-        "timezone": "auto",   # ✅ makes dates local to the location’s timezone
+        "timezone": "auto",
     }
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
@@ -141,16 +165,23 @@ async def fetch_5day_forecast(lat: float, lon: float):
 
     out = []
     for i in range(min(5, len(times))):
-        ds = times[i]  # "YYYY-MM-DD" (already local to the location)
+        ds = times[i]
         try:
-            weekday = _date.fromisoformat(ds).strftime("%a")  # e.g., "Sat"
+            weekday = _date.fromisoformat(ds).strftime("%a")
         except Exception:
             weekday = ""
         out.append({
             "date": ds,
-            "weekday": weekday,                 # ✅ precomputed; no JS Date() needed
+            "weekday": weekday,
             "temp_max_c": tmax[i] if i < len(tmax) else None,
             "temp_min_c": tmin[i] if i < len(tmin) else None,
             "pop": pops[i] if i < len(pops) else None,
         })
-    return out
+    
+    # Get timezone abbreviation
+    tz_abbr = get_timezone_display(lat, lon)
+    
+    return {
+        "forecast": out,
+        "timezone": tz_abbr  # Add timezone to response
+    }

@@ -8,17 +8,20 @@
 # Terminal 1 – Weather App
 uvicorn weather_app.app:app --reload --port 8080
 
-
 # Terminal 2 – Univeraal Reminders Service (URNS)
 uvicorn urns.app:app --reload --port 8081
 
-# Terminal 3 - Universal Users Service (UUS)
+# Terminal 3 - Universal Users Service (UUS) (Port 5556)
 cd UUS_MC2
->python secure_users_service.py
+>python secure_users_service.py 5556
 
 # Terminal 4 - Location Search Service
 python location_search_service.py 6000
 
+# Terminal 5 - Timezone Normalization Service (5555)
+python timezone_service.py 5555
+
+# Terminal 6 - 
 
 Open http://127.0.0.1:8080
 
