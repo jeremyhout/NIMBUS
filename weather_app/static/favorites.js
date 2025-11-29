@@ -46,7 +46,6 @@ function showError(m){ err.textContent = m || ''; }
 function clearError(){ err.textContent = ''; }
 function hideChoices(){ if (choices) { choices.style.display = 'none'; choicesList.innerHTML = ''; } }
 
-function cToF(c){ return Math.round((c * 9/5) + 32); }
 function unitSym(){ return `°${units}`; }
 
 async function fetchJSON(url, body) {
@@ -76,10 +75,17 @@ async function fetchJSON(url, body) {
 function miniTodayText(days){
   if (!Array.isArray(days) || !days.length) return 'High: —\nLow: —';
   const d0 = days[0];
-  const hiC = typeof d0.temp_max_c === 'number' ? d0.temp_max_c : null;
-  const loC = typeof d0.temp_min_c === 'number' ? d0.temp_min_c : null;
-  const hi = hiC == null ? '—' : (units === 'F' ? cToF(hiC) : Math.round(hiC));
-  const lo = loC == null ? '—' : (units === 'F' ? cToF(loC) : Math.round(loC));
+  
+  // Use pre-converted values from backend
+  let hi, lo;
+  if (units === 'F') {
+    hi = (typeof d0.temp_max_f === 'number') ? Math.round(d0.temp_max_f) : '—';
+    lo = (typeof d0.temp_min_f === 'number') ? Math.round(d0.temp_min_f) : '—';
+  } else {
+    hi = (typeof d0.temp_max_c === 'number') ? Math.round(d0.temp_max_c) : '—';
+    lo = (typeof d0.temp_min_c === 'number') ? Math.round(d0.temp_min_c) : '—';
+  }
+  
   return `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
 }
 

@@ -119,7 +119,6 @@ function hideChoices() {
   } 
 }
 
-function cToF(c) { return Math.round((c * 9/5) + 32); }
 function unitSym() { return `°${units}`; }
 
 async function fetchJSON(url, body) {
@@ -176,10 +175,17 @@ function renderSimpleToday(_cityLabel, forecastArr, u='F') {
     return `High: —\nLow: —`;
   }
   const d0 = forecastArr[0];
-  const hiC = (typeof d0.temp_max_c === 'number') ? d0.temp_max_c : null;
-  const loC = (typeof d0.temp_min_c === 'number') ? d0.temp_min_c : null;
-  const hi = hiC == null ? '—' : (u === 'F' ? cToF(hiC) : Math.round(hiC));
-  const lo = loC == null ? '—' : (u === 'F' ? cToF(loC) : Math.round(loC));
+  
+  // Use pre-converted values from backend
+  let hi, lo;
+  if (u === 'F') {
+    hi = (typeof d0.temp_max_f === 'number') ? Math.round(d0.temp_max_f) : '—';
+    lo = (typeof d0.temp_min_f === 'number') ? Math.round(d0.temp_min_f) : '—';
+  } else {
+    hi = (typeof d0.temp_max_c === 'number') ? Math.round(d0.temp_max_c) : '—';
+    lo = (typeof d0.temp_min_c === 'number') ? Math.round(d0.temp_min_c) : '—';
+  }
+  
   return `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
 }
 
@@ -192,15 +198,26 @@ function renderHourlyStrip(hours, u='F', maxCols=24) {
   }
   const cols = Math.min(maxCols, hours.length);
 
-  const nowTemp = (typeof hours[0].temp_c === 'number') ? (u === 'F' ? cToF(hours[0].temp_c) : Math.round(hours[0].temp_c)) : '—';
+  // First column - use pre-converted value
+  let nowTemp;
+  if (u === 'F') {
+    nowTemp = (typeof hours[0].temp_f === 'number') ? Math.round(hours[0].temp_f) : '—';
+  } else {
+    nowTemp = (typeof hours[0].temp_c === 'number') ? Math.round(hours[0].temp_c) : '—';
+  }
   hourlyStrip.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
 
+  // Remaining columns - use pre-converted values
   for (let i = 1; i < cols; i++) {
     const label = hours[i].hour || hours[i].time;
-    const t = (typeof hours[i].temp_c === 'number') ? (u === 'F' ? cToF(hours[i].temp_c) : Math.round(hours[i].temp_c)) : '—';
+    let t;
+    if (u === 'F') {
+      t = (typeof hours[i].temp_f === 'number') ? Math.round(hours[i].temp_f) : '—';
+    } else {
+      t = (typeof hours[i].temp_c === 'number') ? Math.round(hours[i].temp_c) : '—';
+    }
     hourlyStrip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
   }
-  
 }
 
 function makeHourCol(top, bottom) {
@@ -418,22 +435,36 @@ function renderFavPreview() {
       ]);
 
       const d0 = (fore.forecast && fore.forecast[0]) || {};
-      const hiC = (typeof d0.temp_max_c === 'number') ? d0.temp_max_c : null;
-      const loC = (typeof d0.temp_min_c === 'number') ? d0.temp_min_c : null;
-      const hi = hiC == null ? '—' : (units === 'F' ? cToF(hiC) : Math.round(hiC));
-      const lo = loC == null ? '—' : (units === 'F' ? cToF(loC) : Math.round(loC));
+      
+      // Use pre-converted values
+      let hi, lo;
+      if (units === 'F') {
+        hi = (typeof d0.temp_max_f === 'number') ? Math.round(d0.temp_max_f) : '—';
+        lo = (typeof d0.temp_min_f === 'number') ? Math.round(d0.temp_min_f) : '—';
+      } else {
+        hi = (typeof d0.temp_max_c === 'number') ? Math.round(d0.temp_max_c) : '—';
+        lo = (typeof d0.temp_min_c === 'number') ? Math.round(d0.temp_min_c) : '—';
+      }
       todayEl.textContent = `High: ${hi}${unitSym()}\nLow: ${lo}${unitSym()}`;
 
       strip.innerHTML = '';
-      const nowTemp = (typeof hour.hourly[0]?.temp_c === 'number')
-        ? (units === 'F' ? cToF(hour.hourly[0].temp_c) : Math.round(hour.hourly[0].temp_c))
-        : '—';
+      // Use pre-converted values
+      let nowTemp;
+      if (units === 'F') {
+        nowTemp = (typeof hour.hourly[0]?.temp_f === 'number') ? Math.round(hour.hourly[0].temp_f) : '—';
+      } else {
+        nowTemp = (typeof hour.hourly[0]?.temp_c === 'number') ? Math.round(hour.hourly[0].temp_c) : '—';
+      }
       strip.appendChild(makeHourCol('Now', `${nowTemp}${unitSym()}`));
+      
       for (let i = 1; i < Math.min(24, hour.hourly.length); i++) {
         const label = hour.hourly[i].hour || hour.hourly[i].time;
-        const t = (typeof hour.hourly[i].temp_c === 'number')
-          ? (units === 'F' ? cToF(hour.hourly[i].temp_c) : Math.round(hour.hourly[i].temp_c))
-          : '—';
+        let t;
+        if (units === 'F') {
+          t = (typeof hour.hourly[i].temp_f === 'number') ? Math.round(hour.hourly[i].temp_f) : '—';
+        } else {
+          t = (typeof hour.hourly[i].temp_c === 'number') ? Math.round(hour.hourly[i].temp_c) : '—';
+        }
         strip.appendChild(makeHourCol(label, `${t}${unitSym()}`));
       }
     } catch (e) {

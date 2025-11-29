@@ -45,7 +45,6 @@ function showError(m){ err.textContent = m || ''; }
 function clearError(){ err.textContent=''; }
 function hideChoices(){ if (choices){ choices.style.display='none'; choicesList.innerHTML=''; } }
 
-function cToF(c){ return Math.round((c*9/5)+32); }
 function unitSym(){ return `°${units}`; }
 
 async function fetchJSON(url, body){
@@ -71,10 +70,16 @@ function renderFiveStripInto(targetEl, days, u='F'){
   const count = Math.min(5, days.length);
   for (let i=0; i<count; i++){
     const d = days[i];
-    const hiC = (typeof d.temp_max_c === 'number') ? d.temp_max_c : null;
-    const loC = (typeof d.temp_min_c === 'number') ? d.temp_min_c : null;
-    const hi = hiC==null ? '—' : (u==='F' ? cToF(hiC) : Math.round(hiC));
-    const lo = loC==null ? '—' : (u==='F' ? cToF(loC) : Math.round(loC));
+    
+    // Use pre-converted values from backend
+    let hi, lo;
+    if (u === 'F') {
+      hi = (typeof d.temp_max_f === 'number') ? Math.round(d.temp_max_f) : '—';
+      lo = (typeof d.temp_min_f === 'number') ? Math.round(d.temp_min_f) : '—';
+    } else {
+      hi = (typeof d.temp_max_c === 'number') ? Math.round(d.temp_max_c) : '—';
+      lo = (typeof d.temp_min_c === 'number') ? Math.round(d.temp_min_c) : '—';
+    }
 
     const col = document.createElement('div');
     col.style.minWidth = '120px';
@@ -187,10 +192,16 @@ function renderFiveStrip(days, u='F'){
   const count = Math.min(5, days.length);
   for (let i=0; i<count; i++){
     const d = days[i] || {};
-    const hiC = (typeof d.temp_max_c === 'number') ? d.temp_max_c : null;
-    const loC = (typeof d.temp_min_c === 'number') ? d.temp_min_c : null;
-    const hi = hiC==null ? '—' : (u==='F' ? cToF(hiC) : Math.round(hiC));
-    const lo = loC==null ? '—' : (u==='F' ? cToF(loC) : Math.round(loC));
+    
+    // Use pre-converted values from backend
+    let hi, lo;
+    if (u === 'F') {
+      hi = (typeof d.temp_max_f === 'number') ? Math.round(d.temp_max_f) : '—';
+      lo = (typeof d.temp_min_f === 'number') ? Math.round(d.temp_min_f) : '—';
+    } else {
+      hi = (typeof d.temp_max_c === 'number') ? Math.round(d.temp_max_c) : '—';
+      lo = (typeof d.temp_min_c === 'number') ? Math.round(d.temp_min_c) : '—';
+    }
 
     const col = document.createElement('div');
     col.style.minWidth = '120px';
@@ -364,10 +375,17 @@ function renderFiveDayStripInto(targetEl, days, u='F', maxDays=5) {
   for (let i = 0; i < len; i++) {
     const d = days[i] || {};
     const weekday = d.weekday || (d.date || '');
-    const hiC = (typeof d.temp_max_c === 'number') ? d.temp_max_c : null;
-    const loC = (typeof d.temp_min_c === 'number') ? d.temp_min_c : null;
-    const hi = hiC == null ? '—' : (u === 'F' ? cToF(hiC) : Math.round(hiC));
-    const lo = loC == null ? '—' : (u === 'F' ? cToF(loC) : Math.round(loC));
+    
+    // Use pre-converted values from backend
+    let hi, lo;
+    if (u === 'F') {
+      hi = (typeof d.temp_max_f === 'number') ? Math.round(d.temp_max_f) : '—';
+      lo = (typeof d.temp_min_f === 'number') ? Math.round(d.temp_min_f) : '—';
+    } else {
+      hi = (typeof d.temp_max_c === 'number') ? Math.round(d.temp_max_c) : '—';
+      lo = (typeof d.temp_min_c === 'number') ? Math.round(d.temp_min_c) : '—';
+    }
+    
     targetEl.appendChild(makeDayCol(weekday, `${hi}${unitSym()}`, `${lo}${unitSym()}`));
   }
 }

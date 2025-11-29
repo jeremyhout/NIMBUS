@@ -51,6 +51,42 @@ async def favorites(request: Request):
 async def settings(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request, "banner": LATEST_BANNER})
 
+# Conversion Microservice
+@app.get("/api/convert")
+async def api_convert(
+    value: float,
+    from_unit: str,
+    to_unit: str
+):
+    """
+    Proxy endpoint to demonstrate the unit conversion microservice.
+    
+    Example: /api/convert?value=32&from_unit=fahrenheit&to_unit=celsius
+    """
+    from unit_conversion_client import get_conversion_client
+    
+    try:
+        client = get_conversion_client()
+        result = client.convert(value, from_unit, to_unit)
+        
+        if result is None:
+            return JSONResponse(
+                {"error": "Conversion service unavailable"},
+                status_code=503
+            )
+        
+        return {
+            "value": value,
+            "from": from_unit,
+            "to": to_unit,
+            "result": result
+        }
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e)},
+            status_code=400
+        )
+
 
 # ---- NEW: 24-hour hourly API ----
 @app.post("/api/hourly")

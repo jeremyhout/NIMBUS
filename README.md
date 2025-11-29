@@ -21,7 +21,8 @@ python location_search_service.py 6000
 # Terminal 5 - Timezone Normalization Service (5555)
 python timezone_service.py 5555
 
-# Terminal 6 - 
+# Terminal 6 - Unit Conversion Service
+python unit_conversion_service.py 6001
 
 Open http://127.0.0.1:8080
 

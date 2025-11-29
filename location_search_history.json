@@ -23,6 +23,24 @@
   ],
   "houtj": [
     {
+      "location_id": "colorado_city_texas_united_states",
+      "display_name": "Colorado City, Texas, United States",
+      "lat": 32.38817,
+      "lon": -100.86456,
+      "search_count": 1,
+      "first_searched": "2025-11-29T10:35:24.146178",
+      "last_searched": "2025-11-29T10:35:24.146178"
+    },
+    {
+      "location_id": "colorado_city_texas_us",
+      "display_name": "Colorado City, Texas, United States",
+      "lat": 32.38817,
+      "lon": -100.86456,
+      "search_count": 1,
+      "first_searched": "2025-11-29T10:34:58.990436",
+      "last_searched": "2025-11-29T10:34:58.990436"
+    },
+    {
       "location_id": "new_york_new_york_us",
       "display_name": "New York, New York, United States",
       "lat": 40.71427,
